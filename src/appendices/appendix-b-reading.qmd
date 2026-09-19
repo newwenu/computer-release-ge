@@ -1,0 +1,25 @@
+# 延伸阅读指南 {#sec-appendix-reading}
+
+按主题与难度分类的推荐阅读书目。入门级适合所有读者，进阶级需要一定基础，专业级需要编程基础。
+
+## 入门级
+
+- @petzold2000code —— 从手电筒讲到计算机，零基础读物的标杆
+- @kernighan2017understanding —— 普林斯顿计算机通识课教材，覆盖计算机系统的核心概念
+- @gleick2011information —— 信息概念的历史，从鼓声讲到香农
+- @blum2012tubes —— 互联网的物理基础设施探访，走访海底光缆和数据中心
+
+## 进阶级
+
+- @bryant2016csapp —— 计算机系统经典教材，从程序员的视角理解系统
+- @arpaci2018ostep —— 操作系统教材，以虚拟化、并发、持久化三篇组织，免费在线阅读
+- @kurose2021networking —— 计算机网络经典教材，自顶向下方法
+- @nisan2005elements —— 从与非门到操作系统，手把手搭建计算机
+- @kleppmann2017designing —— 数据密集型应用设计，涵盖分布式系统的核心权衡
+
+## 专业级
+
+- @patterson2021computer —— 计算机组成与设计经典，RISC-V 版
+- @anderson2020security —— 安全工程领域权威著作，免费在线阅读
+- @russell2020ai —— AI 教材，覆盖整个领域的知识体系
+- @gregg2020systems —— 系统性能分析，从 Linux 性能工具到云基础设施优化

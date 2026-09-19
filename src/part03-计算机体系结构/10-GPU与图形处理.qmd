@@ -1,0 +1,304 @@
+## GPU 与图形处理 {#sec-gpu}
+
+::: {.callout-note}
+### 本章概览
+
+**本章内容**：GPU 如何从图形渲染的专用硬件走向通用并行计算平台
+
+**前置知识**：理解 CPU 通过指令集执行程序，流水线技术让 CPU 同时处理多条指令的不同阶段；显示器将帧缓冲中的像素数据逐行扫描为可见光信号
+:::
+
+---
+
+### 为什么 CPU 画图不够快
+
+假设你正在玩一个 3D 游戏，屏幕分辨率是 1920×1080，约 200 万像素。游戏以每秒 60 帧的速度刷新画面，意味着每帧只有约 16.7 毫秒的渲染时间。在这 16.7 毫秒内，计算机需要完成：确定每个物体的三维位置、计算光照和阴影、把三维坐标映射到二维屏幕、给每个像素上色。
+
+200 万像素 × 60 帧 = 每秒 1.2 亿个像素需要计算。每个像素可能涉及数十条指令（光照公式、纹理采样、透明度混合），总计算量达到每秒数十亿次操作。
+
+CPU 被设计来执行复杂的串行任务：它有少量大核心（4 到 16 个），每个核心擅长分支预测、乱序执行、处理复杂的控制流。但渲染 200 万像素不需要复杂的控制流——每个像素的计算是独立的，公式相同，只是输入数据不同。让 CPU 的少数几个核心逐个处理 200 万像素，相当于让一个工匠手工制作 200 万件相同的零件：他能做，但速度跟不上。这个比喻的局限在于：工匠可以随时切换去制作不同的零件（CPU 擅长在不同任务间切换），但在像素渲染这类"所有零件相同"的任务中，这种灵活性没有用武之地——GPU 的数千个核心各做一件相同的零件，比一个工匠做 200 万件快得多。
+
+**GPU**（Graphics Processing Unit，图形处理器）就是为解决这个问题设计的：用数千个简单的小核心同时处理大量相似的计算。
+
+### CPU 与 GPU：串行 vs 并行
+
+CPU 和 GPU 的设计哲学不同，源于它们要解决不同类型的问题：
+
+:::: {#fig-cpu-vs-gpu}
+<style>
+.cg-wrap{display:flex;justify-content:center;align-items:stretch;gap:20px;margin:14px 0}
+.cg-panel{border:1.5px solid #d1d5db;border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.cg-cpu{width:280px}
+.cg-gpu{width:320px}
+.cg-cpu .cg-title{background:#f0f4f8;color:#4a6a8a;border-bottom:1.5px solid #c8d6e2}
+.cg-gpu .cg-title{background:#fef9f0;color:#8a6a3a;border-bottom:1.5px solid #e2d4b8}
+.cg-title{text-align:center;font-size:13px;font-weight:700;padding:8px 0;letter-spacing:.5px}
+.cg-svg{display:block;width:100%}
+.cg-info{padding:8px 12px;border-top:1.5px solid #e9ecef;font-size:10px;line-height:1.6;color:#555;background:#fafbfc}
+.cg-info b{color:#333}
+</style>
+<div class="cg-wrap">
+<div class="cg-panel cg-cpu">
+<div class="cg-title">CPU</div>
+<svg class="cg-svg" viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<g id="cpu-core">
+<rect x="0" y="0" width="240" height="38" rx="3" fill="#e8f0fe" stroke="#5a7da8" stroke-width="1.2"/>
+<rect x="12" y="21" width="50" height="11" rx="2" fill="#c8daf0" stroke="#9ab4d4" stroke-width="0.7"/>
+<text x="37" y="29" text-anchor="middle" font-size="7" fill="#4a6a8a">CU · ALU</text>
+<rect x="70" y="21" width="70" height="11" rx="2" fill="#c8daf0" stroke="#9ab4d4" stroke-width="0.7"/>
+<text x="105" y="29" text-anchor="middle" font-size="7" fill="#4a6a8a">Cache (MB)</text>
+<rect x="148" y="21" width="82" height="11" rx="2" fill="#dceefc" stroke="#9ab4d4" stroke-width="0.7"/>
+<text x="189" y="29" text-anchor="middle" font-size="7" fill="#4a6a8a">分支预测 · 乱序</text>
+</g>
+</defs>
+<use href="#cpu-core" x="20" y="15"/><text x="140" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#3a6a9a">核心 1</text>
+<use href="#cpu-core" x="20" y="58"/><text x="140" y="75" text-anchor="middle" font-size="11" font-weight="700" fill="#3a6a9a">核心 2</text>
+<use href="#cpu-core" x="20" y="101"/><text x="140" y="118" text-anchor="middle" font-size="11" font-weight="700" fill="#3a6a9a">核心 3</text>
+<use href="#cpu-core" x="20" y="144"/><text x="140" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#3a6a9a">核心 4</text>
+</svg>
+<div class="cg-info"><b>4-16 个大核心</b> · 3-5 GHz · 复杂控制逻辑 · 大缓存<br/>擅长：串行任务、复杂分支、频繁上下文切换</div>
+</div>
+<div class="cg-panel cg-gpu">
+<div class="cg-title">GPU</div>
+<svg class="cg-svg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern id="core-grid" x="15" y="12" width="28" height="21" patternUnits="userSpaceOnUse">
+<rect width="24" height="18" rx="1" fill="#f5e6d0" stroke="#c4a46c" stroke-width="0.5"/>
+</pattern>
+<linearGradient id="core-fade" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="white"/>
+<stop offset="50%" stop-color="white"/>
+<stop offset="100%" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+<mask id="fade-mask">
+<rect x="15" y="12" width="290" height="176" fill="url(#core-fade)"/>
+</mask>
+</defs>
+<rect x="15" y="12" width="290" height="176" fill="url(#core-grid)" mask="url(#fade-mask)"/>
+</svg>
+<div class="cg-info"><b>数千个小核心</b> · 1-2 GHz · 简单控制逻辑 · 小缓存<br/>擅长：并行计算、数据密集型任务、SIMD/SIMT</div>
+</div>
+</div>
+
+CPU 与 GPU 核心架构对比：CPU 用少量大核心处理复杂串行任务，GPU 用大量小核心并行处理简单计算
+::::
+
+| 特性 | CPU | GPU |
+|------|-----|-----|
+| 核心数 | 4--16 个大核心 | 数千个小核心 |
+| 单核性能 | 高（3--5 GHz、复杂流水线） | 低（1--2 GHz、简单流水线） |
+| 擅长任务 | 串行、复杂控制流 | 并行、数据密集计算 |
+| 缓存 | 大容量（MB 级） | 小容量（KB 级） |
+| 线程切换 | 开销大（保存/恢复寄存器） | 开销小（硬件调度） |
+| 典型工作频率 | 3--5 GHz | 1--2 GHz |
+
+CPU 像一支特种部队：人数少，但每个人装备精良、能独立应对复杂局面。GPU 像一支大型步兵方阵：人数众多，但每个人装备简单、只能执行统一的指令。
+
+这个比喻的局限在于：特种部队的每个成员可以独立决策（分支预测），步兵方阵的成员必须听统一口令（SIMD）。但 GPU 的"统一口令"是它强大并行能力的来源——正是这种约束让数千个核心可以高效协作。而 CPU 的"独立决策"能力在数据并行任务中反而成为负担——每个核心花了大量晶体管在分支预测和乱序执行（out-of-order execution，CPU 在等待操作数时先执行后续不依赖该操作数的指令）上，而不是实际计算。
+
+### GPU 的并行模型
+
+GPU 的并行能力来自两个层次的设计：
+
+**第一层：大量小核心。** GPU 将芯片面积分配给大量简单核心，而不是少数复杂核心。一个高端 GPU 有数千个核心（NVIDIA 称它们为 CUDA 核心），每个核心的晶体管数量少于 CPU 核心，但核心数量多弥补了单核性能的差距。假设一个任务需要 1000 次相同的计算，CPU 用 8 个核心需要 125 轮，GPU 用 1000 个核心只需 1 轮。
+
+**第二层：SIMD/SIMT。** GPU 核心不是独立工作的——它们以 32 个为一组（NVIDIA 称为一个 warp，AMD 称为一个 wavefront，GCN 架构为 64 个、RDNA 架构为 32 个），组内所有核心必须执行同一条指令，但处理不同的数据。这种模式叫 **SIMT**（Single Instruction, Multiple Threads，单指令多线程）：一组核心共享指令获取和译码电路，只复制执行单元，节省晶体管。
+
+```{mermaid}
+%%| label: fig-cpu-gpu-simd
+%%| fig-cap: "CPU MIMD 模式与 GPU SIMT 模式对比"
+graph LR
+    subgraph CPU模式
+        C1["指令1"] --> D1["数据1"] --> R1["结果1"]
+        C2["指令2"] --> D2["数据2"] --> R2["结果2"]
+        C3["指令3"] --> D3["数据3"] --> R3["结果3"]
+    end
+    subgraph GPU模式
+        I["一条指令"] --> A["数据1"] --> O1["结果1"]
+        I --> B["数据2"] --> O2["结果2"]
+        I --> C["数据3"] --> O3["结果3"]
+        I --> D["数据4"] --> O4["结果4"]
+    end
+```
+
+CPU 模式下，每个核心独立取指令、译码、执行，可以做不同的事。GPU 模式下，一组核心共享指令，只做同一件事，但数据不同。
+
+### 渲染管线：从三维到二维
+
+理解了 GPU 为什么能并行处理大量数据后，来看它实际要解决的问题：如何把三维场景变成屏幕上的二维图像。
+
+这个过程叫**渲染管线**（rendering pipeline），分为三个主要阶段：
+
+```{mermaid}
+%%| label: fig-render-pipeline-simple
+%%| fig-cap: "渲染管线三阶段概览"
+graph LR
+    V["顶点处理<br/>确定3D位置"] --> R["光栅化<br/>3D→2D像素"] --> F["像素着色<br/>给每个像素上色"]
+```
+
+**顶点处理**（vertex processing）：确定三维场景中每个顶点（三角形面的角点）在屏幕上的位置。输入是三维坐标 (x, y, z)，输出是二维坐标 (x, y) 加上深度值 z（用于判断遮挡关系）。每个顶点独立计算——一个场景可能有数百万个顶点，GPU 可以同时处理数千个。
+
+**光栅化**（rasterization）：把连续的三角形"拆成"离散的像素。一个三角形覆盖屏幕上的哪些像素点？光栅化就是回答这个问题。它把几何图形（三角形）转换为像素网格（fragment），每个像素片段携带位置、深度和插值后的属性（颜色、纹理坐标）。光栅化是 GPU 的固定功能硬件完成的，不占用可编程核心。
+
+**像素着色**（pixel shading，也叫 fragment shading）：给每个像素片段计算最终颜色。这是渲染管线中耗时最长的阶段——每个像素可能涉及纹理采样（从纹理图片中读取对应位置的颜色值）、光照计算（光源方向、法线、反射率）、阴影计算、透明度混合等。1920×1080 分辨率下，每帧约 200 万像素，每个像素着色器可能执行数百条指令，每秒 60 帧意味着每秒数百亿次着色器指令。这个阶段由 GPU 的数千个核心并行处理，每个核心负责一个像素片段。
+
+:::: {#fig-rendering-pipeline}
+<style>
+.rp-wrap{display:flex;justify-content:center;align-items:flex-start;gap:12px;margin:14px 0}
+.rp-panel{width:230px;border:1.5px solid #d1d5db;border-radius:6px;overflow:hidden}
+.rp-title{text-align:center;font-size:13px;font-weight:700;padding:9px 0;letter-spacing:.5px}
+.rp-wire .rp-title{background:#f0f4f8;color:#4a6a8a;border-bottom:1.5px solid #c8d6e2}
+.rp-rast .rp-title{background:#fef9f0;color:#8a6a3a;border-bottom:1.5px solid #e2d4b8}
+.rp-shade .rp-title{background:#f0f8f2;color:#4a7a5a;border-bottom:1.5px solid #b8d4c2}
+.rp-svg{display:block;width:100%}
+.rp-desc{text-align:center;font-size:11px;color:#777;padding:6px 10px;border-top:1.5px solid #e9ecef;line-height:1.5}
+.rp-arrow{display:flex;align-items:center;font-size:20px;color:#bbb;padding-top:75px;flex-shrink:0}
+</style>
+<div class="rp-wrap">
+<div class="rp-panel rp-wire">
+<div class="rp-title">顶点处理（线框）</div>
+<svg class="rp-svg" viewBox="0 0 230 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<polygon id="base" points="20,155 200,155 175,133 45,133"/>
+<polygon id="left" points="107,84 56,111 82,89 133,62"/>
+<polygon id="top" points="107,84 158,111 184,89 133,62"/>
+<polygon id="front" points="107,84 158,111 107,137 56,111"/>
+<circle id="vt" r="3.5" fill="#e74c3c"/>
+</defs>
+<use href="#base" fill="none" stroke="#bbb" stroke-width="1"/>
+<use href="#left" fill="none" stroke="#5a7da8" stroke-width="1.8"/>
+<use href="#top" fill="none" stroke="#5a7da8" stroke-width="1.8"/>
+<use href="#front" fill="none" stroke="#5a7da8" stroke-width="1.8"/>
+<g stroke="#aab" stroke-width="1.2" stroke-dasharray="4,4">
+<line x1="107" y1="137" x2="133" y2="115"/><line x1="133" y1="115" x2="184" y2="89"/><line x1="133" y1="115" x2="82" y2="89"/>
+</g>
+<use href="#vt" cx="107" cy="84"/><use href="#vt" cx="158" cy="111"/><use href="#vt" cx="107" cy="137"/>
+<use href="#vt" cx="56" cy="111"/><use href="#vt" cx="133" cy="62"/><use href="#vt" cx="184" cy="89"/>
+<use href="#vt" cx="133" cy="115"/><use href="#vt" cx="82" cy="89"/>
+<text x="115" y="188" text-anchor="middle" font-size="11" fill="#888">3D 坐标→2D 屏幕坐标</text>
+</svg>
+<div class="rp-desc">处理每个顶点的三维位置，<br/>投影到二维屏幕</div>
+</div>
+<div class="rp-arrow">→</div>
+<div class="rp-panel rp-rast">
+<div class="rp-title">光栅化（像素填充）</div>
+<svg class="rp-svg" viewBox="0 0 230 200" xmlns="http://www.w3.org/2000/svg">
+<use href="#base" fill="#d8d8d8" stroke="#bbb" stroke-width="1"/>
+<use href="#left" fill="#5a8cba" stroke="#5a7da8" stroke-width="1.5"/>
+<use href="#top" fill="#a8d4f0" stroke="#5a7da8" stroke-width="1.5"/>
+<use href="#front" fill="#7eb8e0" stroke="#5a7da8" stroke-width="1.5"/>
+<g stroke="#fff" stroke-width="0.6" opacity="0.45">
+<line x1="66" y1="108" x2="97" y2="127"/><line x1="76" y1="105" x2="107" y2="124"/><line x1="87" y1="102" x2="135" y2="131"/>
+<line x1="97" y1="99" x2="148" y2="121"/><line x1="107" y1="96" x2="158" y2="111"/><line x1="117" y1="93" x2="148" y2="108"/><line x1="127" y1="90" x2="138" y2="105"/>
+<line x1="107" y1="96" x2="82" y2="111"/><line x1="117" y1="99" x2="92" y2="114"/><line x1="127" y1="102" x2="102" y2="117"/>
+<line x1="137" y1="105" x2="112" y2="120"/><line x1="148" y1="108" x2="122" y2="123"/><line x1="148" y1="121" x2="132" y2="129"/>
+<line x1="138" y1="118" x2="122" y2="126"/><line x1="127" y1="115" x2="112" y2="123"/><line x1="117" y1="112" x2="102" y2="120"/>
+<line x1="107" y1="109" x2="92" y2="117"/><line x1="97" y1="106" x2="82" y2="114"/>
+<line x1="60" y1="145" x2="180" y2="145"/><line x1="75" y1="140" x2="185" y2="140"/><line x1="90" y1="135" x2="180" y2="135"/>
+<line x1="40" y1="148" x2="48" y2="133"/><line x1="70" y1="148" x2="78" y2="133"/><line x1="100" y1="148" x2="108" y2="133"/>
+<line x1="130" y1="148" x2="138" y2="133"/><line x1="160" y1="148" x2="168" y2="133"/><line x1="190" y1="148" x2="192" y2="133"/>
+</g>
+<text x="115" y="188" text-anchor="middle" font-size="11" fill="#888">三角形→像素网格</text>
+</svg>
+<div class="rp-desc">把三角形拆成离散像素，<br/>由固定功能硬件完成</div>
+</div>
+<div class="rp-arrow">→</div>
+<div class="rp-panel rp-shade">
+<div class="rp-title">像素着色（上色）</div>
+<svg class="rp-svg" viewBox="0 0 230 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="fg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5b9bd5"/><stop offset="100%" stop-color="#3a7abf"/></linearGradient>
+<linearGradient id="tg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7fb8e8"/><stop offset="100%" stop-color="#5b9bd5"/></linearGradient>
+<linearGradient id="rg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2d5a8e"/><stop offset="100%" stop-color="#1e4070"/></linearGradient>
+<linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a4a70"/><stop offset="100%" stop-color="#0d3050"/></linearGradient>
+<linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a6a9a"/><stop offset="100%" stop-color="#1e4a72"/></linearGradient>
+<linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8c0b8"/><stop offset="100%" stop-color="#a09890"/></linearGradient>
+</defs>
+<use href="#base" fill="url(#gd)" stroke="#b0a8a0" stroke-width="1"/>
+<polygon points="107,137 133,115 185,140 175,158" fill="#000" opacity="0.18"/>
+<use href="#left" fill="url(#lg2)" stroke="#4a7ab0" stroke-width="1.5"/>
+<use href="#top" fill="url(#tg2)" stroke="#4a7ab0" stroke-width="1.5"/>
+<use href="#front" fill="url(#fg2)" stroke="#4a7ab0" stroke-width="1.5"/>
+<g stroke="#000" opacity="0.12"><line x1="107" y1="137" x2="158" y2="111" stroke-width="1.8"/><line x1="107" y1="137" x2="56" y2="111" stroke-width="1.8"/><line x1="107" y1="137" x2="133" y2="115" stroke-width="1.2"/></g>
+<ellipse cx="88" cy="106" rx="18" ry="10" fill="#fff" opacity="0.25" transform="rotate(-25,88,106)"/>
+<ellipse cx="82" cy="104" rx="10" ry="5" fill="#fff" opacity="0.4" transform="rotate(-25,82,104)"/>
+<text x="115" y="188" text-anchor="middle" font-size="11" fill="#888">光照·纹理·阴影</text>
+</svg>
+<div class="rp-desc">每个像素计算最终颜色：<br/>纹理采样、光照、阴影、透明度</div>
+</div>
+</div>
+
+渲染管线的三个阶段：从三维线框到光栅化像素，再到着色后的最终画面
+::::
+
+### 帧缓冲与帧率
+
+渲染管线输出的最终像素颜色写入哪里？答案是**帧缓冲**（frame buffer），即显卡显存中的一块区域，存放屏幕上每个像素的颜色值。显示控制器按固定频率从帧缓冲逐行读取像素数据，发送给显示器。这个频率叫**刷新率**（refresh rate），常见值为 60 Hz、120 Hz、144 Hz。
+
+GPU 每秒能生成的帧数叫**帧率**（frame rate），单位是 FPS（Frames Per Second）。帧率和刷新率是不同的概念：
+
+- 帧率是 GPU 输出画面的速度，取决于场景复杂度和 GPU 性能
+- 刷新率是显示器更新画面的速度，是硬件的固定参数
+
+两者之间的关系决定了你的视觉体验：如果 GPU 帧率 45 FPS，显示器刷新率 60 Hz，显示器每 1/60 秒去帧缓冲取画面，但 GPU 还没画完新帧，显示器只能重复显示上一帧，你看到的是"卡顿"。如果 GPU 帧率 120 FPS，显示器 60 Hz，GPU 画了多余的帧，显示器只能显示其中一部分，多余的帧被丢弃。
+
+游戏中的"垂直同步"（V-Sync）就是让 GPU 等待显示器刷新周期，避免画面撕裂（显示器刷新到一半时帧缓冲被新帧覆盖，导致上半屏是旧帧、下半屏是新帧）。
+
+### GPU 不只是用来画图：GPGPU
+
+渲染管线展示了 GPU 处理图形的方式，但 GPU 的并行架构不只适用于图形。2000 年代后期，研究人员发现同一个并行架构可以用来处理任何数据密集、计算模式统一的任务。
+
+这种用 GPU 做非图形计算的用法叫 **GPGPU**（General-Purpose computing on GPU，GPU 通用计算）。早期 GPGPU 的障碍是编程方式——程序员必须把计算任务"伪装"成图形渲染（把数据当纹理，把计算当着色器），用 OpenGL 或 DirectX 的图形 API 来写通用计算。这个过程需要程序员掌握图形 API 的细节，代码难以维护。
+
+2006 年，NVIDIA 发布了 **CUDA**（Compute Unified Device Architecture），一个直接用 C/C++ 编写 GPU 程序的平台。CUDA 把 GPU 暴露为一组可编程的并行核心，程序员不需要了解图形渲染的细节，直接写 C 函数（称为 kernel），指定每个函数由多少个线程执行。CUDA 编译器将 C 代码编译为 GPU 可执行的指令，运行时系统将线程分配到 GPU 的数千个核心上。
+
+```{mermaid}
+%%| label: fig-cuda-execution
+%%| fig-cap: "CUDA 执行模型"
+graph TB
+    subgraph CPU端
+        H["主机程序（C/C++）"] --> K["调用 kernel：add<<<blocks,threads>>>"]
+    end
+    subgraph GPU端
+        K --> G["数千个线程并行执行 add"]
+        G --> T1["线程0: a[0]+b[0]"]
+        G --> T2["线程1: a[1]+b[1]"]
+        G --> T3["线程2: a[2]+b[2]"]
+        G --> T4["..."]
+        G --> T5["线程N: a[N]+b[N]"]
+    end
+```
+
+CUDA 之后，其他平台也出现了：OpenCL 是一个跨厂商的开放标准（支持 NVIDIA、AMD、Intel），Apple 的 Metal 在 iOS 和 macOS 上提供 GPU 计算能力，Vulkan 也提供了计算着色器（compute shader）。
+
+### 为什么 GPU 也适合 AI 训练
+
+CUDA 让 GPU 的并行计算能力走出了图形领域。在众多 GPGPU 应用中，AI 训练是推动 GPU 需求增长的主要力量。为什么？
+
+神经网络的一层全连接层，本质上是输入向量乘以权重矩阵：$\mathbf{y} = \mathbf{W} \times \mathbf{x}$。如果输入向量有 1000 个元素，权重矩阵是 1000×1000，一次前向传播需要 100 万次乘法。训练时需要反向传播，计算量翻倍。一个现代大语言模型（LLM）的参数量可达数千亿，每次训练迭代需要数百亿次矩阵运算。
+
+矩阵乘法适合 GPU 的并行架构：每个输出元素是权重矩阵的一行与输入向量的点积，所有输出元素的计算相互独立，可以并行处理。GPU 的数千个核心各自计算一个输出元素，一次完成整个矩阵乘法。
+
+更深层的原因在于数值精度：图形渲染通常使用 32 位浮点数（FP32），AI 推理和训练也逐渐发现 16 位浮点数（FP16）甚至 8 位整数（INT8）已经足够。NVIDIA 的 Tensor Core 专门为矩阵乘法设计，能在 FP16 精度下在一个时钟周期内完成 4×4 矩阵的乘加运算。一块高端 GPU 的 FP16 算力可达数百至数千 TFLOPS（每秒万亿次浮点运算），而高端 CPU 的同等算力只有数 TFLOPS，差距在 100 倍以上。
+
+GPU 适合 AI 的另一个原因是**显存带宽**。AI 训练需要频繁读写大量参数和中间结果，GPU 显存（GDDR6X 或 HBM）的带宽可达 1 TB/s 以上，是 CPU 主存带宽（DDR5，约 50--100 GB/s）的 10 到 20 倍。高带宽意味着数据送进计算核心的速度提高，核心等待数据的时间减少。
+
+把 GPU 比作 AI 的"引擎"不准确——GPU 不是专为 AI 设计的，它的并行架构是为图形渲染设计的，AI 也是一种"数据并行"任务，GPU 的架构碰巧契合。这种"碰巧"在计算机历史上并不罕见：一个为解决某个问题而发明的技术，后来在另一个领域找到了更广阔的应用。
+
+### 本章小结
+
+CPU 用少量大核心处理复杂的串行任务，GPU 用数千个小核心并行处理大量相似的计算。GPU 的并行架构源于图形渲染的需求——每秒数亿像素需要同时计算，渲染管线将三维场景通过顶点处理、光栅化和像素着色三个阶段转换为二维图像。这种并行架构后来被用于非图形计算（GPGPU），CUDA 的出现让 GPU 编程变得直接用 C/C++ 完成。神经网络的核心计算（矩阵乘法）利用了 GPU 并行处理数据的能力，加上 GPU 显存的高带宽，让 GPU 成为 AI 训练的主要硬件。
+
+::: {.callout-note}
+### 在生活中
+
+你玩 3D 游戏时的流畅度取决于显卡（GPU）的性能——帧率从 30 FPS 跳到 60 FPS，感受的差异就是 GPU 用更多核心并行处理了更多像素；你手机上的 GPU 和应用处理器集成在同一块芯片上，负责渲染屏幕上的每一帧画面；你用 AI 绘图工具生成一张图，后台的 GPU 正在对数十亿个参数做矩阵乘法，这和渲染游戏画面用的是一样的并行架构。
+:::
+
+::: {.callout-tip}
+### 延伸阅读
+
+- John L. Hennessy & David A. Patterson《Computer Architecture: A Quantitative Approach》第 4 章 —— 深入讲解 GPU 架构与 SIMD/SIMT 并行计算模型的设计原理
+- Nicholas Wilt《The CUDA Handbook》—— 面向程序员的 CUDA 编程指南，从 GPU 硬件结构讲到 kernel 优化策略
+:::

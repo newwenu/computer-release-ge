@@ -1,0 +1,42 @@
+/* 计算机系统通识 - 自定义样式 */
+
+/* 调整 callout 块的间距 */
+.callout {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+/* 表格样式优化 */
+table {
+  font-size: 0.95em;
+}
+
+/* 代码块样式 */
+pre {
+  font-size: 0.9em;
+}
+
+/* 章节编号：默认无前后缀，JS 按类型添加 is-chapter / is-appendix */
+.chapter-number.is-chapter::before {
+  content: "第 ";
+}
+.chapter-number.is-chapter::after {
+  content: " 章";
+}
+.chapter-number.is-appendix::before {
+  content: "附录 ";
+}
+
+/* 首页隐藏重复标题 */
+#quarto-document-content > section.level1.unnumbered:first-of-type > h1.unnumbered {
+  display: none;
+}
+
+/* 章节标题间距 */
+h2 {
+  margin-top: 2em;
+}
+
+h3 {
+  margin-top: 1.5em;
+}

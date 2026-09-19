@@ -1,0 +1,31 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Specific file types
+*.qmd text diff=markdown
+*.md text diff=markdown
+*.bib text
+*.yml text
+*.css text
+*.svg text
+*.py text
+*.js text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+
+# Force LF for shell scripts (if any)
+*.sh text eol=lf
+
+# Force CRLF for Windows-specific files (if any)
+*.bat text eol=crlf
+*.cmd text eol=crlf

@@ -1,0 +1,86 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "计算机系统通识"
+  author: "newwenu"
+  date: last-modified
+  language: zh
+  favicon: src/assets/favicon.svg
+  chapters:
+    - index.qmd
+    - src/preface.qmd
+    - part: "第一部分：信息与编码"
+      chapters:
+        - src/part01-信息与编码/01-什么是信息.qmd
+        - src/part01-信息与编码/02-二进制与数字系统.qmd
+        - src/part01-信息与编码/03-信息的数字化表示.qmd
+    - part: "第二部分：硬件基础"
+      chapters:
+        - src/part02-硬件基础/04-布尔逻辑与逻辑门.qmd
+        - src/part02-硬件基础/05-时序逻辑与存储.qmd
+        - src/part02-硬件基础/06-冯诺依曼体系结构.qmd
+        - src/part02-硬件基础/07-处理器如何执行指令.qmd
+    - part: "第三部分：计算机体系结构"
+      chapters:
+        - src/part03-计算机体系结构/08-存储层次结构.qmd
+        - src/part03-计算机体系结构/09-输入输出与总线.qmd
+        - src/part03-计算机体系结构/10-GPU与图形处理.qmd
+        - src/part03-计算机体系结构/11-计算机的多样性.qmd
+    - part: "第四部分：操作系统"
+      chapters:
+        - src/part04-操作系统/12-启动过程.qmd
+        - src/part04-操作系统/13-操作系统概述.qmd
+        - src/part04-操作系统/14-进程管理.qmd
+        - src/part04-操作系统/15-内存管理.qmd
+        - src/part04-操作系统/16-文件系统.qmd
+        - src/part04-操作系统/17-用户界面.qmd
+    - part: "第五部分：计算机网络"
+      chapters:
+        - src/part05-计算机网络/18-互联网的物理基础设施.qmd
+        - src/part05-计算机网络/19-网络基础与分层模型.qmd
+        - src/part05-计算机网络/20-网络层与传输层.qmd
+        - src/part05-计算机网络/21-应用层与互联网.qmd
+    - part: "第六部分：软件与数据"
+      chapters:
+        - src/part06-软件与数据/22-软件是如何被创造的.qmd
+        - src/part06-软件与数据/23-数据组织与数据库.qmd
+        - src/part06-软件与数据/24-云计算与虚拟化.qmd
+        - src/part06-软件与数据/25-人工智能与量子计算.qmd
+    - part: "第七部分：安全与隐私"
+      chapters:
+        - src/part07-安全与隐私/26-计算机安全.qmd
+        - src/part07-安全与隐私/27-隐私与数字伦理.qmd
+    - src/conclusion.qmd
+    - src/references.qmd
+  appendices:
+    - src/appendices/appendix-a-glossary.qmd
+    - src/appendices/appendix-b-reading.qmd
+    - src/appendices/appendix-c-units.qmd
+    - src/appendices/appendix-d-mechanisms.qmd
+    - src/appendices/appendix-e-web-journey.qmd
+
+bibliography: src/references.bib
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    css: src/assets/style.css
+    include-after-body: src/assets/chapter-format.js
+    mermaid:
+      theme: neutral
+  pdf:
+    documentclass: scrbook
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    mainfont: "Noto Serif CJK SC"
+    sansfont: "Noto Sans CJK SC"
+    monofont: "Noto Sans Mono CJK SC"
+    CJKmainfont: "Noto Serif CJK SC"
+
+lang: zh

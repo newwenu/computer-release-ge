@@ -1,0 +1,54 @@
+# Quarto 构建输出
+_book/
+_site/
+_freeze/
+
+# Quarto 中间文件
+/.quarto/
+/*.tex
+**/*.quarto_ipynb
+
+# 临时文件
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+.trae/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 备份文件
+*.bak
+*.backup
+
+# 工具目录（制图草稿、脚本、AI生图等，不参与构建）
+工具（给作者用的，不参与构建）/
+
+# 参考项目目录（克隆的外部项目）
+参考项目/
+
+# Node.js 依赖
+node_modules/
+package-lock.json
+
+# 敏感文件
+.env
+**/.env
+
+# Python 缓存
+__pycache__/
+**/__pycache__/

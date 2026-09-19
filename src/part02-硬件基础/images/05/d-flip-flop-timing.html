@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>D触发器时序波形</title>
+<style>
+  body { margin: 40px; background: #fff; font-family: "Microsoft YaHei", sans-serif; }
+</style>
+</head>
+<body>
+
+<script type="WaveDrom">
+
+{ "signal": [
+  { "name": "CP (时钟)", "wave": "P.P.P.P." },
+  { "name": "D (数据)",   "wave": "0.1...0.." },
+  { "name": "Q (输出)",   "wave": "0..1...0" }
+]}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.9.1/skins/default.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.9.1/wavedrom.min.js"></script>
+<script>window.onload = function() { WaveDrom.ProcessAll(); };</script>
+</body>
+</html>
