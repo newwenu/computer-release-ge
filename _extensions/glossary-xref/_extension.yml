@@ -1,0 +1,7 @@
+title: Glossary Cross-references
+author: local
+version: 0.1.0
+contributes:
+  filters:
+    - path: glossary-xref.lua
+      at: post-render

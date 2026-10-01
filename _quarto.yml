@@ -83,4 +83,17 @@ format:
     monofont: "Noto Sans Mono CJK SC"
     CJKmainfont: "Noto Serif CJK SC"
 
+crossref:
+  custom:
+    - kind: float
+      key: gl
+      reference-prefix: ""
+      caption-prefix: ""
+      space-before-numbering: false
+      latex-env: glossary
+
+filters:
+  - quarto
+  - glossary-xref
+
 lang: zh

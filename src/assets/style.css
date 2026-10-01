@@ -40,3 +40,14 @@ h2 {
 h3 {
   margin-top: 1.5em;
 }
+
+/* 术语表：覆盖 gl 类型 float 容器的默认居中和 figure 样式 */
+.quarto-figure-center > figure.quarto-float-gl > div {
+  text-align: left;
+}
+figure.quarto-float-gl {
+  margin: 0;
+}
+figcaption.quarto-float-gl {
+  display: none;
+}
