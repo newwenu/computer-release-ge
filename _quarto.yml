@@ -1,6 +1,8 @@
 project:
   type: book
   output-dir: _book
+  preview:
+    port: 4200
 
 book:
   title: "计算机系统通识"
@@ -8,6 +10,9 @@ book:
   date: last-modified
   language: zh
   favicon: src/assets/favicon.svg
+  site-url: "https://newwenu.github.io/computer-release-ge/"
+  repo-url: "https://github.com/newwenu/computer-release-ge"
+  repo-actions: [issue, edit, source]
   chapters:
     - index.qmd
     - src/preface.qmd

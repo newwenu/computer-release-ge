@@ -1,5 +1,7 @@
 # 计算机系统通识
 
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE) [![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-brightgreen)](https://newwenu.github.io/computer-release-ge/)
+
 > 面向所有想知道"计算机到底怎么工作"的读者 —— 从比特到人工智能，一本书建立完整的计算机世界观。
 
 ## 这本书适合谁？
@@ -34,46 +36,28 @@
 | Part 6 | 软件与数据 | 22-25 | 云计算、AI 是什么？ |
 | Part 7 | 安全与隐私 | 26-27 | 如何保护数字生活？ |
 
-完整的章节规划和大纲，请查看 [`大纲与规范（给作者看的，不包含到目录中）/计算机系统通识-书籍大纲.md`](大纲与规范（给作者看的，不包含到目录中）/计算机系统通识-书籍大纲.md)
-
 ## 🚀 快速开始
 
 ### 在线阅读（推荐）
 
-> TODO: 添加在线阅读链接（GitHub Pages / GitBook 等）
+🔗 **[https://newwenu.github.io/computer-release-ge/](https://newwenu.github.io/computer-release-ge/)**
 
 ### 本地构建
 
+**前置要求**：安装 [Quarto](https://quarto.org/docs/get-started/)
+
 ```bash
-# 前置要求：安装 Quarto
-# https://quarto.org/docs/get-started/
-
-# 渲染为 HTML（推荐）
-quarto render
-
-# 或渲染为 PDF
-quarto render --to pdf
+git clone https://github.com/newwenu/computer-release-ge.git
+cd computer-release-ge
+quarto render          # 渲染为 HTML（推荐）
+# quarto render --to pdf  # 或渲染为 PDF
 ```
 
 ## 📊 写作进度
 
-> **状态**: 🚧 27 章初稿已完成，持续修订中
-
-| 部分 | 进度 | 备注 |
-|------|------|------|
-| Part 1: 信息与编码 | ✅ 初稿完成 | 第1-3章 |
-| Part 2: 硬件基础 | ✅ 初稿完成 | 第4-7章 |
-| Part 3: 体系结构 | ✅ 初稿完成 | 第8-11章 |
-| Part 4: 操作系统 | ✅ 初稿完成 | 第12-17章 |
-| Part 5: 计算机网络 | ✅ 初稿完成 | 第18-21章 |
-| Part 6: 软件与数据 | ✅ 初稿完成 | 第22-25章 |
-| Part 7: 安全与隐私 | ✅ 初稿完成 | 第26-27章 |
-
-*最后更新：2026-09-19*
+> 🚧 **27 章初稿已完成（7 大部分全部），持续修订中** · 最后更新 2026-10-02
 
 ## 🤝 反馈与交流
-
-本仓库为私有开发仓库，暂不接受 Pull Request。
 
 如果您在阅读过程中发现问题或有建议：
 - 🔤 错别字或排版错误
@@ -82,32 +66,18 @@ quarto render --to pdf
 - 💡 改进建议或新的类比思路
 
 欢迎通过以下方式反馈：
-- **提交 Issue** - [点击创建新 Issue](../../issues/new)
-- **邮件联系** - 见下方联系方式
+- **提交 Issue** - [点击创建新 Issue](https://github.com/newwenu/computer-release-ge/issues/new)
+- **提交 Pull Request** - 欢迎直接修复错别字、补充内容或改进表述
+- **邮件联系** - （后续补充）
 
 ## 📄 许可证
 
-本项目采用 **CC BY-SA 4.0** ([知识共享-相同方式共享 4.0 国际](LICENSE)) 许可证。
-
-您可以自由地：
-- ✅ **分享** — 复制、重新分发本材料
-- ✅ **改编** — 重新混合、转换、并基于本材料构建
-
-只需遵循：
-- 📝 **署名** — 提供适当的署名和许可证链接
-- 🔗 **相同方式分享** — 如果您改编作品，必须以相同许可证分发
-
-详见 [LICENSE](LICENSE) 文件。
+本项目采用 [CC BY-SA 4.0](LICENSE)（知识共享 署名-相同方式共享 4.0 国际）许可证。可自由分享与改编，需署名并以相同许可证分发。
 
 ## 🛠️ 技术栈
 
 - **文档框架**: [Quarto](https://quarto.org/) - 科学与技术出版系统
 - **标记语言**: Markdown + Quarto 扩展 (.qmd)
 - **参考文献**: BibTeX
+- **部署**: GitHub Actions → GitHub Pages
 - **版本控制**: Git
-- **许可证**: CC BY-SA 4.0
-
-## 📖 相关资源
-
-- [撰写规范](大纲与规范（给作者看的，不包含到目录中）/本书撰写规范.md) - 作者写作指南
-- [项目结构规范](项目工程（给作者看的，不包含到目录中）/项目文件结构规范.md) - 文件组织与命名规则
